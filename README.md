@@ -1,8 +1,10 @@
 # CST8918 W25 Lab 12 - Terraform CI/CD on Azure
 
 ## Team Members
-- Shivareddy Sama 
--stefeena
+- Shivareddy Sama
+
+- stefeena
+
 
 This lab involved working with Terraform for automating infrastructure deployment on Azure, as well as setting up GitHub Actions for CI/CD workflows. The tasks were broken into several steps, including configuring Terraform, setting up GitHub Actions workflows, and verifying the deployments to Azure.
 Task 1-5: Completion
