@@ -32,7 +32,9 @@ Static analysis, integration tests, and deployment workflows were executed witho
 
 
 
-Conclusion
+**Conclusion**
+
+
 Tasks 1 to 5 were completed successfully, and the GitHub Actions workflows ran as expected for static code analysis, integration tests, and deployment. However, Task 6 encountered errors due to missing configuration files and issues with running certain tools (checkov and terraform plan).
 
 The following actions are needed to resolve the issues:
