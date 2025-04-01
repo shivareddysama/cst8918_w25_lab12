@@ -1,0 +1,35 @@
+name: Static Code Analysis
+
+on:
+  push:
+    branches:
+      - '**'  # Trigger on any push to any branch
+  pull_request:
+    branches:
+      - '**'  # Trigger on PRs
+
+jobs:
+  static_code_analysis:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.0  # specify Terraform version you are using
+
+      - name: Install Checkov for security checks
+        run: |
+          pip install checkov
+
+      - name: Terraform format check (terraform fmt)
+        run: terraform fmt -check -diff
+
+      - name: Validate Terraform configuration
+        run: terraform validate
+
+      - name: Run Checkov security check on Terraform files
+        run: checkov -d infra/ -f terraform

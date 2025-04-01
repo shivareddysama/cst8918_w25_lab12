@@ -1,0 +1,74 @@
+name: Integration Tests and Deploy
+
+on:
+  pull_request:
+    branches:
+      - '**'  # Trigger on PRs to any branch
+  push:
+    branches:
+      - main  # Trigger when pushing to main branch
+
+jobs:
+  # Terraform plan and static checks job
+  integration_tests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.0
+
+      - name: Install TFLint
+        run: |
+          curl -sLo /tmp/tflint.zip https://github.com/terraform-linters/tflint/releases/download/v0.45.0/tflint-linux-amd64.zip
+          unzip /tmp/tflint.zip -d /usr/local/bin/
+          tflint --version
+
+      - name: Run Terraform init
+        run: terraform init
+
+      - name: Run Terraform plan
+        run: terraform plan -out=tfplan
+
+      - name: Run TFLint
+        run: tflint --config=infra/.tflint.hcl
+
+      - name: Upload Terraform plan to PR as a comment
+        run: |
+          terraform show -no-color tfplan > tfplan.txt
+          gh pr comment ${{ github.event.pull_request.number }} --body "$(cat tfplan.txt)"
+
+  # Terraform deploy job
+  terraform_deploy:
+    needs: integration_tests  # Ensure this job runs only after the plan job completes successfully
+    if: ${{ github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main' }}  # Trigger only when PR is merged to main
+    runs-on: ubuntu-latest
+    environment:
+      name: production  # Ensure this matches the environment you set in GitHub
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v1
+        with:
+          terraform_version: 1.5.0
+
+      - name: Azure Login with OIDC
+        uses: azure/login@v1
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+
+      - name: Run Terraform init
+        run: terraform init
+
+      - name: Run Terraform apply
+        run: terraform apply -auto-approve tfplan
